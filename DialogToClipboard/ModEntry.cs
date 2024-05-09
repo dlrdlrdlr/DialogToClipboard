@@ -7,7 +7,7 @@ using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Quests;
 
-namespace YourProjectName
+namespace DialogToClipboard
 {
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
@@ -23,15 +23,19 @@ namespace YourProjectName
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         }
 
-
-        /*********
-        ** Private methods
-        *********/
+        /**********
+        ** Private Variables
+        ***********/
 
         List<Type> excludedMenus = new List<Type>() {typeof(ItemGrabMenu)};
         IClickableMenu? currentMenu = null;
         bool inMenu = false;
         String GrabbedText = "";
+
+        /*********
+        ** Private methods
+        *********/
+
         /// <summary>Raised when player changes menu.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
@@ -53,6 +57,7 @@ namespace YourProjectName
                 GrabbedText = "";
             }
         }
+
         /// <summary>Raised at each Tick of the game.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
@@ -90,20 +95,16 @@ namespace YourProjectName
                 this.Monitor.Log(menuType.ToString(), LogLevel.Debug);
                 return;
             }
-            this.print(processText(GrabbedText));
+            StardewValley.DesktopClipboard.SetText(GrabbedText);
         }        
         
+
         /// <summary>Used to strip special characters from menu text.</summary>
         /// <param name="text">The input text to be processed</param>
         private String processText(string text)
         {
             String newText = text.Replace("^", "\n");
             return newText;
-        }
-        private void print(string text)
-        {
-            StardewValley.DesktopClipboard.SetText(text);
-            this.Monitor.Log(text, LogLevel.Debug);
         }
     }
 }
