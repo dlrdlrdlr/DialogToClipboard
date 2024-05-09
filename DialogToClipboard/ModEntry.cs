@@ -21,7 +21,6 @@ namespace DialogToClipboard
         {
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
-            helper.Events.Input.ButtonPressed += this.OnButtonPressed;
         }
 
         /**********
@@ -32,7 +31,7 @@ namespace DialogToClipboard
         IClickableMenu? currentMenu = null;
         bool inMenu = false;
         String GrabbedText = "";
-        bool debug = true;
+        bool debug = false;
         /*********
         ** Private methods
         *********/
@@ -112,8 +111,7 @@ namespace DialogToClipboard
                 }
             }
             else
-            {
-                this.Monitor.Log(menuType.ToString(), LogLevel.Debug);
+            {debugPrint(menuType.ToString());
                 return;
             }
             if(GrabbedText == newText)
@@ -132,8 +130,11 @@ namespace DialogToClipboard
         }
         private void print(string text)
         {
-            StardewValley.DesktopClipboard.SetText(text);
-            this.Monitor.Log(text, LogLevel.Debug);
+            if(text != "")
+            {
+                StardewValley.DesktopClipboard.SetText(text);
+            }
+            debugPrint(text);
         }
         /// <summary>
         ///  Used for debug purposes only
