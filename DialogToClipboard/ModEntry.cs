@@ -21,6 +21,7 @@ namespace DialogToClipboard
         {
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
+            helper.Events.Input.ButtonPressed += this.OnButtonPressed;
         }
 
         /**********
@@ -31,7 +32,7 @@ namespace DialogToClipboard
         IClickableMenu? currentMenu = null;
         bool inMenu = false;
         String GrabbedText = "";
-
+        bool debug = true;
         /*********
         ** Private methods
         *********/
@@ -45,28 +46,48 @@ namespace DialogToClipboard
             {
                 return;
             }
-            if(e.NewMenu != null && e.OldMenu == null)
-            {        
-                currentMenu = e.NewMenu;
-                inMenu = true;
-                return;        
-            }
-            else if(e.NewMenu == null && e.OldMenu != null)
+            if(e.NewMenu == null && e.OldMenu != null)
             {
                 inMenu = false;
                 GrabbedText = "";
+                return;
             }
+            currentMenu = e.NewMenu;
+            inMenu = true;
+            
         }
 
+        /*********
+        ** Private methods
+        *********/
+        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+        {
+            grabText();
+        }
         /// <summary>Raised at each Tick of the game.</summary>
         /// <param name="sender">The event sender.</param>
         /// <param name="e">The event data.</param>
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
-            if(!inMenu || GrabbedText != "" || currentMenu == null )
+            
+            this.grabText();
+        }        
+        
+        private void grabText()
+        {
+            if(!Context.IsWorldReady)
             {
                 return;
             }
+
+            if(!inMenu || currentMenu == null )
+            {
+                return;
+            }
+            string newText = "";
             Type menuType =  currentMenu.GetType();
             if(excludedMenus.Contains(menuType))
             {
@@ -75,7 +96,7 @@ namespace DialogToClipboard
             else if(menuType.Equals(typeof(DialogueBox)))
             {
                 DialogueBox curMenu = (DialogueBox)currentMenu;
-                GrabbedText = curMenu.getCurrentString();
+                newText = curMenu.getCurrentString();
             }
             else if(menuType.Equals(typeof(QuestLog)))
             {
@@ -83,7 +104,7 @@ namespace DialogToClipboard
                 IReflectedField<IQuest> currentQuest = this.Helper.Reflection.GetField<IQuest>(qlog,"_shownQuest");
                 if(currentQuest != null && currentQuest.GetValue() != null)
                 {
-                    GrabbedText = currentQuest.GetValue().GetName() + ":" + currentQuest.GetValue().GetDescription();
+                    newText = currentQuest.GetValue().GetName() + ":" + currentQuest.GetValue().GetDescription();
                 }
                 else
                 {
@@ -95,16 +116,36 @@ namespace DialogToClipboard
                 this.Monitor.Log(menuType.ToString(), LogLevel.Debug);
                 return;
             }
-            StardewValley.DesktopClipboard.SetText(GrabbedText);
-        }        
-        
-
+            if(GrabbedText == newText)
+            {
+                return;
+            }
+            GrabbedText = newText;
+            this.print(processText(GrabbedText));
+        }
         /// <summary>Used to strip special characters from menu text.</summary>
         /// <param name="text">The input text to be processed</param>
         private String processText(string text)
         {
             String newText = text.Replace("^", "\n");
             return newText;
+        }
+        private void print(string text)
+        {
+            StardewValley.DesktopClipboard.SetText(text);
+            this.Monitor.Log(text, LogLevel.Debug);
+        }
+        /// <summary>
+        ///  Used for debug purposes only
+        /// </summary>
+        /// <param name="text">Text printed to debug log</param>
+        private void debugPrint(string text)
+        {
+            if(!debug)
+            {
+                return;
+            }
+            this.Monitor.Log(text, LogLevel.Debug);
         }
     }
 }
